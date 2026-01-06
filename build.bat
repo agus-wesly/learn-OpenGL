@@ -2,7 +2,7 @@
 
 cl /c /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glm-1.0.2" /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glfw-3.4.bin.WIN64\include" /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glad\include" /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /permissive- /Fo"LearnOpenGL\x64\Debug\\" /Fd"LearnOpenGL\x64\Debug\vc145.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt main.cpp
 
-cl /c /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glm-1.0.2" /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glfw-3.4.bin.WIN64\include" /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glad\include" /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /permissive- /Fo"LearnOpenGL\x64\Debug\\" /Fd"LearnOpenGL\x64\Debug\vc145.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt glad.cpp
+REM cl /c /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glm-1.0.2" /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glfw-3.4.bin.WIN64\include" /I"C:\Users\agusw\Documents\Visual Studio\Libraries\glad\include" /ZI /JMC /nologo /W3 /WX- /diagnostics:column /sdl /Od /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /permissive- /Fo"LearnOpenGL\x64\Debug\\" /Fd"LearnOpenGL\x64\Debug\vc145.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt glad.cpp
 
 IF ERRORLEVEL 1 (
     echo Compile failed
