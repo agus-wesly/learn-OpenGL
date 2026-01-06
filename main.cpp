@@ -1,25 +1,117 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <cassert>
+#include <fstream>
+#include <sstream>
 
 #define WIDTH 800
 #define HEIGHT 600
 
-const char *vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
+struct Shader {
+    uint32_t ID;
+};
 
-const char *fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\0";
+void ShaderInit(Shader &s, const char *vertexPath, const char *fragmentPath) {
+    std::string vertexCode;
+    std::string fragmentCode;
+    std::ifstream vShaderFile;
+    std::ifstream fShaderFile;
+    vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+    try {
+        vShaderFile.open(vertexPath);
+        fShaderFile.open(fragmentPath);
+        std::stringstream vShaderStream;
+        std::stringstream fShaderStream;
+
+        vShaderStream << vShaderFile.rdbuf();
+        fShaderStream << fShaderFile.rdbuf();
+        vShaderFile.close();
+        fShaderFile.close();
+
+        vertexCode = vShaderStream.str();
+        fragmentCode = fShaderStream.str();
+    } catch(std::ifstream::failure &e) {
+        std::cerr << "Cannot create shader because : " << e.what() << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    const char* vShaderCode = vertexCode.c_str();
+    const char* fShaderCode = fragmentCode.c_str();
+    uint32_t vertexShader{};
+    uint32_t fragmentShader{};
+
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(vertexShader, 1, &vShaderCode, nullptr);
+    glCompileShader(vertexShader);
+
+    int32_t success{};
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        const size_t msgLen = 512;
+        char msg[msgLen];
+        glGetShaderInfoLog(vertexShader, msgLen, nullptr, msg);
+        std::cerr << "Cannot compile the vertex shader with message : " << msg << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    glShaderSource(fragmentShader, 1, &fShaderCode, nullptr);
+    glCompileShader(fragmentShader);
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        const size_t msgLen = 512;
+        char msg[msgLen];
+        glGetShaderInfoLog(fragmentShader, msgLen, nullptr, msg);
+        std::cerr << "Cannot compile the fragment shader with message : " << msg << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    uint32_t shaderProgram{};
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        const size_t msgLen = 512;
+        char msg[msgLen];
+        glGetProgramInfoLog(shaderProgram, msgLen, nullptr, msg);
+        std::cerr << "Cannot link the shader program with message : " << msg << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    s.ID = shaderProgram;
+}
+
+void ShaderUse(const Shader &s){
+    glUseProgram(s.ID);
+}
+
+void ShaderSetFloat(const Shader &s, const char *name, float value) {
+    int vertexColorLocation = glGetUniformLocation(s.ID, name);
+    assert(vertexColorLocation != -1);
+    glUniform1f(vertexColorLocation, value);
+}
+
+void ShaderSetInt(const Shader &s, const char *name, int value) {
+    int vertexColorLocation = glGetUniformLocation(s.ID, name);
+    assert(vertexColorLocation != -1);
+    glUniform1i(vertexColorLocation, value);
+}
+
+void ShaderSetBool(const Shader &s, const char *name, bool value) {
+    int vertexColorLocation = glGetUniformLocation(s.ID, name);
+    assert(vertexColorLocation != -1);
+    glUniform1i(vertexColorLocation, value);
+}
+
+void frameBufferSizeCallback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
@@ -50,68 +142,24 @@ int main()
     }
 
     glViewport(0, 0, WIDTH, HEIGHT);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
 
-    // compile shader
-    // ========================================
-    uint32_t vertexShader{};
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
-
-    int32_t success{};
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        const size_t msgLen = 512;
-        char msg[msgLen];
-        glGetShaderInfoLog(vertexShader, msgLen, nullptr, msg);
-        std::cerr << "Cannot compile the vertex shader with message : " << msg << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    uint32_t fragmentShader{};
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        const size_t msgLen = 512;
-        char msg[msgLen];
-        glGetShaderInfoLog(fragmentShader, msgLen, nullptr, msg);
-        std::cerr << "Cannot compile the fragment shader with message : " << msg << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    uint32_t shaderProgram{};
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        const size_t msgLen = 512;
-        char msg[msgLen];
-        glGetProgramInfoLog(shaderProgram, msgLen, nullptr, msg);
-        std::cerr << "Cannot link the shader program with message : " << msg << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    Shader s{};
+    const char *vPath = "./vertex_shader.glsl";
+    const char *fPath = "./fragment_shader.glsl";
+    ShaderInit(s, vPath, fPath);
 
     // setup vertex data
     // ========================================
     float vertices[] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left
+        // Pos              // Color
+        -0.5f, 0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.0f,  0.0f, 0.0f, 1.0f,
+        0.0f,  -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
     };
     uint32_t indices[] = {  // note that we start from 0!
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
+        0, 1, 2,   // first triangle
+        // 1, 2, 3    // second triangle
     };
 
     uint32_t VAO, VBO, EBO;
@@ -126,8 +174,10 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (GLvoid *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid *)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid *)(3*sizeof(GL_FLOAT)));
+    glEnableVertexAttribArray(1);
 
     // glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
 
@@ -136,9 +186,11 @@ int main()
         glClearColor(0.53f, 0.53f, 0.53f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
+        ShaderUse(s);
+        ShaderSetFloat(s, "xOffset", 0.2f);
+
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
