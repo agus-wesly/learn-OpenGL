@@ -7,6 +7,9 @@
 #include <cassert>
 #include <fstream>
 #include <sstream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -155,11 +158,11 @@ int main()
     // setup vertex data
     // ========================================
     float vertices[] = {
-        // positions          // colors           // texture coords
-        0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left
+        // positions          // colors           // texture1 coords
+        0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  1.0f, 1.0f,   // top right
+        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  1.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f, 0.0f,   // bottom left
+        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f, 0.0f, 1.0f,    // top left
     };
     uint32_t indices[] = {  // note that we start from 0!
         0, 1, 3,
@@ -185,16 +188,18 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (GLvoid *)(6*sizeof(GL_FLOAT)));
     glEnableVertexAttribArray(2);
 
-    // setup texture
+    // setup texture1
     // ========================================
-    uint32_t texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    uint32_t texture1 ,texture2;
+
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    stbi_set_flip_vertically_on_load(true);
     int width, height, nrChannels;
     unsigned char *data = stbi_load("./assets/container.jpg", &width, &height, &nrChannels, 0);
     if (data) {
@@ -209,11 +214,39 @@ int main()
            	data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
-        std::cerr << "Failed to load image texture" << std::endl;
+        std::cerr << "Failed to load image texture1" << std::endl;
         exit(EXIT_FAILURE);
     }
     stbi_image_free(data);
 
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    data = stbi_load("./assets/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D,
+           	0,
+           	GL_RGBA,
+           	width,
+           	height,
+           	0,
+           	GL_RGBA,
+           	GL_UNSIGNED_BYTE,
+           	data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cerr << "Failed to load image texture2" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    stbi_image_free(data);
+
+    ShaderUse(s);
+    ShaderSetInt(s, "ourTexture1", 0);
+    ShaderSetInt(s, "ourTexture2", 1);
     // glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
 
     while (!glfwWindowShouldClose(window)) {
@@ -221,10 +254,42 @@ int main()
         glClearColor(0.53f, 0.53f, 0.53f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // ShaderSetFloat(s, "xOffset", 0.2f);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        ShaderUse(s);
-        glBindVertexArray(VAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+
+        {
+            glm::mat4 trans(1.0f);
+            trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0.0f));
+            trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
+            // trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+
+            int transformLocation = glGetUniformLocation(s.ID, "transform");
+            assert(transformLocation != -1);
+            glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
+
+            ShaderUse(s);
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        }
+        {
+            glm::mat4 trans(1.0f);
+            trans = glm::translate(trans, glm::vec3(0.5, 0.5, 0.0f));
+            auto rot = glm::abs(glm::sin(glfwGetTime()));
+            trans = glm::scale(trans, glm::vec3(rot, rot, 1));
+
+            int transformLocation = glGetUniformLocation(s.ID, "transform");
+            assert(transformLocation != -1);
+            glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
+
+            // ShaderUse(s);
+            // glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
+
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwPollEvents();
