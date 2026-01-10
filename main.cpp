@@ -133,19 +133,28 @@ void processInput(GLFWwindow *window) {
     }
 }
 
-void renderElement(const Shader &s, uint32_t VAO, glm::mat4 trans) {
+void renderElement(const Shader &s, uint32_t VAO, glm::mat4 transform, glm::vec3 translate, int32_t depth) {
+    if (depth < 0) return;
+
+    // Transformations
+    // ---------------------------
+    transform = glm::translate(transform, translate);
+    transform = glm::scale(transform, glm::vec3(0.5f));
+
+    --depth;
+    renderElement(s, VAO, transform, glm::vec3(0.0f, 0.75f, 0.0f), depth); // Top
+    renderElement(s, VAO, transform, glm::vec3(-0.75f, -0.75f, 0.0f), depth); // Left
+    renderElement(s, VAO, transform, glm::vec3(0.75f, -0.75f, 0.0f), depth); // Right
+
     // Use shader
     // ---------------------------
     ShaderUse(s);
-
-    // Setting up transform uniform
-    // ---------------------------
-    ShaderSetTransformation(s, "transform", glm::value_ptr(trans));
+    ShaderSetTransformation(s, "transform", glm::value_ptr(transform));
 
     // Draw
     // ---------------------------
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 }
 
 int main()
@@ -186,18 +195,16 @@ int main()
     // Setup vertex data
     // ---------------------------
     float vertices[] = {
-        // positions          // colors           // texture1 coords
-        0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  1.0f, 1.0f,   // top right
-        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f, 0.0f, 1.0f,    // top left
+        // positions          // colors          // texture1 coords
+         0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  0.55f, 1.0f,   // top center
+         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  1.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,  0.0f, 0.0f,   // bottom left
     };
 
     // Setup indices
     // ---------------------------
     uint32_t indices[] = {  // note that we start from 0!
-        0, 1, 3,
-        1, 2, 3,
+        0, 1, 2,
     };
 
     // Initialization
@@ -233,9 +240,8 @@ int main()
 
     // Setup textures
     // ---------------------------
-    uint32_t texture1 ,texture2;
+    uint32_t texture1;
     glGenTextures(1, &texture1);
-    glGenTextures(1, &texture2);
 
     // Bind texture1 with params
     // ---------------------------
@@ -250,48 +256,20 @@ int main()
     // Read image and bind to texture1
     // --------------------------------------------
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("./assets/container.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("./assets/illuminati.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D,
            	0,
-           	GL_RGB,
+           	GL_RGBA,
            	width,
            	height,
            	0,
-           	GL_RGB,
+           	GL_RGBA,
            	GL_UNSIGNED_BYTE,
            	data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         std::cerr << "Failed to load image texture1" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    stbi_image_free(data);
-
-    // Bind texture2 with params
-    // ---------------------------
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Read image and bind to texture2
-    // --------------------------------------------
-    data = stbi_load("./assets/awesomeface.png", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D,
-           	0,
-           	GL_RGBA,
-           	width,
-           	height,
-           	0,
-           	GL_RGBA,
-           	GL_UNSIGNED_BYTE,
-           	data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cerr << "Failed to load image texture2" << std::endl;
         exit(EXIT_FAILURE);
     }
     stbi_image_free(data);
@@ -302,9 +280,6 @@ int main()
 
     // uniform sampler2D ourTexture1;
     ShaderSetInt(s, "ourTexture1", 0);
-
-    // uniform sampler2D ourTexture2;
-    ShaderSetInt(s, "ourTexture2", 1);
 
     while (!glfwWindowShouldClose(window)) {
         // Input processing
@@ -320,32 +295,10 @@ int main()
         // ---------------------------
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
 
-        {
-            // Transformations
-            // ---------------------------
-            glm::mat4 trans(1.0f);
-            trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0.0f));
-            trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
-
-            // Render
-            // ---------------------------
-            renderElement(s, VAO, trans);
-        }
-        {
-            // Transformations
-            // ---------------------------
-            glm::mat4 trans(1.0f);
-            trans = glm::translate(trans, glm::vec3(0.5, 0.5, 0.0f));
-            auto rot = glm::abs(glm::sin(glfwGetTime()));
-            trans = glm::scale(trans, glm::vec3(rot, rot, 1));
-
-            // Render
-            // ---------------------------
-            renderElement(s, VAO, trans);
-        }
+        // Render
+        // ---------------------------
+        renderElement(s, VAO, glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 5);
 
         // Swap buffer and poll IO events
         // ---------------------------
