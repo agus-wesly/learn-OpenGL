@@ -111,6 +111,12 @@ void ShaderSetInt(const Shader &s, const char *name, int value) {
     glUniform1i(vertexColorLocation, value);
 }
 
+void ShaderSetTransformation(const Shader &s, const char *name, const GLfloat* value) {
+    int transformLocation = glGetUniformLocation(s.ID, name);
+    assert(transformLocation != -1);
+    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, value);
+}
+
 void ShaderSetBool(const Shader &s, const char *name, bool value) {
     int vertexColorLocation = glGetUniformLocation(s.ID, name);
     assert(vertexColorLocation != -1);
@@ -127,36 +133,58 @@ void processInput(GLFWwindow *window) {
     }
 }
 
+void renderElement(const Shader &s, uint32_t VAO, glm::mat4 trans) {
+    // Use shader
+    // ---------------------------
+    ShaderUse(s);
+
+    // Setting up transform uniform
+    // ---------------------------
+    ShaderSetTransformation(s, "transform", glm::value_ptr(trans));
+
+    // Draw
+    // ---------------------------
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
 int main()
 {
+    // Initialize OpenGL
+    // ---------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+
+    // Window Creation
+    // ---------------------------
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Hello from OpenGL", NULL, NULL);
     if (window == NULL) {
         std::cerr << "Failed to create a window" << std::endl;
         glfwTerminate();
         return -1;
     }
-
     glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
+
+    // Load OpenGL functions
+    // ---------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initalize GLAD" << std::endl;
         return -1;
     }
 
-    glViewport(0, 0, WIDTH, HEIGHT);
-    glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
-
+    // Build and compile shader
+    // ---------------------------
     Shader s{};
     const char *vPath = "./vertex_shader.glsl";
     const char *fPath = "./fragment_shader.glsl";
     ShaderInit(s, vPath, fPath);
 
-    // setup vertex data
-    // ========================================
+    // Setup vertex data
+    // ---------------------------
     float vertices[] = {
         // positions          // colors           // texture1 coords
         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  1.0f, 1.0f,   // top right
@@ -164,35 +192,53 @@ int main()
         -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f, 0.0f,   // bottom left
         -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f, 0.0f, 1.0f,    // top left
     };
+
+    // Setup indices
+    // ---------------------------
     uint32_t indices[] = {  // note that we start from 0!
         0, 1, 3,
         1, 2, 3,
     };
 
+    // Initialization
+    // ---------------------------
     uint32_t VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
 
+    // 1) Bind vertex array object first
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+    // 2) Bind vertex buffer object with vertex
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+    // 3) Bind element buffer object with indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // 4) Set the vertex attribute
+    // layout (location = 0) in vec3 aPos;
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (GLvoid *)0);
     glEnableVertexAttribArray(0);
+
+    // layout (location = 1) in vec3 aCol;
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (GLvoid *)(3*sizeof(GL_FLOAT)));
     glEnableVertexAttribArray(1);
+
+    // layout (location = 2) in vec2 aTexPos;
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (GLvoid *)(6*sizeof(GL_FLOAT)));
     glEnableVertexAttribArray(2);
 
-    // setup texture1
-    // ========================================
+    // Setup textures
+    // ---------------------------
     uint32_t texture1 ,texture2;
-
     glGenTextures(1, &texture1);
+    glGenTextures(1, &texture2);
+
+    // Bind texture1 with params
+    // ---------------------------
     glBindTexture(GL_TEXTURE_2D, texture1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -200,6 +246,9 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     stbi_set_flip_vertically_on_load(true);
+
+    // Read image and bind to texture1
+    // --------------------------------------------
     int width, height, nrChannels;
     unsigned char *data = stbi_load("./assets/container.jpg", &width, &height, &nrChannels, 0);
     if (data) {
@@ -219,13 +268,16 @@ int main()
     }
     stbi_image_free(data);
 
-    glGenTextures(1, &texture2);
+    // Bind texture2 with params
+    // ---------------------------
     glBindTexture(GL_TEXTURE_2D, texture2);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    // Read image and bind to texture2
+    // --------------------------------------------
     data = stbi_load("./assets/awesomeface.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D,
@@ -244,56 +296,61 @@ int main()
     }
     stbi_image_free(data);
 
+    // Setting up texture uniforms
+    // ---------------------------
     ShaderUse(s);
+
+    // uniform sampler2D ourTexture1;
     ShaderSetInt(s, "ourTexture1", 0);
+
+    // uniform sampler2D ourTexture2;
     ShaderSetInt(s, "ourTexture2", 1);
-    // glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
 
     while (!glfwWindowShouldClose(window)) {
+        // Input processing
+        // ---------------------------
         processInput(window);
+
+        // Reset pixel
+        // ---------------------------
         glClearColor(0.53f, 0.53f, 0.53f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // Bind & activate texture
+        // ---------------------------
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
         {
+            // Transformations
+            // ---------------------------
             glm::mat4 trans(1.0f);
             trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0.0f));
             trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
-            // trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
 
-            int transformLocation = glGetUniformLocation(s.ID, "transform");
-            assert(transformLocation != -1);
-            glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
-
-            ShaderUse(s);
-            glBindVertexArray(VAO);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+            // Render
+            // ---------------------------
+            renderElement(s, VAO, trans);
         }
         {
+            // Transformations
+            // ---------------------------
             glm::mat4 trans(1.0f);
             trans = glm::translate(trans, glm::vec3(0.5, 0.5, 0.0f));
             auto rot = glm::abs(glm::sin(glfwGetTime()));
             trans = glm::scale(trans, glm::vec3(rot, rot, 1));
 
-            int transformLocation = glGetUniformLocation(s.ID, "transform");
-            assert(transformLocation != -1);
-            glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
-
-            // ShaderUse(s);
-            // glBindVertexArray(VAO);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            // Render
+            // ---------------------------
+            renderElement(s, VAO, trans);
         }
 
-
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        glfwPollEvents();
+        // Swap buffer and poll IO events
+        // ---------------------------
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
     glfwTerminate();
