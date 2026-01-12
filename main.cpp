@@ -157,7 +157,6 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-
     // Window Creation
     // ---------------------------
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Hello from OpenGL", NULL, NULL);
@@ -186,11 +185,47 @@ int main()
     // Setup vertex data
     // ---------------------------
     float vertices[] = {
-        // positions          // colors           // texture1 coords
-        0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,  1.0f, 1.0f,   // top right
-        0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,  1.0f, 0.0f,   // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f, 0.0f, 0.0f,   // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f, 0.0f, 1.0f,    // top left
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
     // Setup indices
@@ -202,10 +237,11 @@ int main()
 
     // Initialization
     // ---------------------------
-    uint32_t VAO, VBO, EBO;
+    uint32_t VAO, VBO;
+    // uint32_t EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    // glGenBuffers(1, &EBO);
 
     // 1) Bind vertex array object first
     glBindVertexArray(VAO);
@@ -215,21 +251,17 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // 3) Bind element buffer object with indices
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // 4) Set the vertex attribute
     // layout (location = 0) in vec3 aPos;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (GLvoid *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid *)0);
     glEnableVertexAttribArray(0);
 
-    // layout (location = 1) in vec3 aCol;
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (GLvoid *)(3*sizeof(GL_FLOAT)));
+    // layout (location = 1) in vec2 aTexPos;
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid *)(3*sizeof(GL_FLOAT)));
     glEnableVertexAttribArray(1);
-
-    // layout (location = 2) in vec2 aTexPos;
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GL_FLOAT), (GLvoid *)(6*sizeof(GL_FLOAT)));
-    glEnableVertexAttribArray(2);
 
     // Setup textures
     // ---------------------------
@@ -245,12 +277,12 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
 
     // Read image and bind to texture1
     // --------------------------------------------
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("./assets/container.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("./assets/jangandikasihtau.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D,
            	0,
@@ -278,15 +310,15 @@ int main()
 
     // Read image and bind to texture2
     // --------------------------------------------
-    data = stbi_load("./assets/awesomeface.png", &width, &height, &nrChannels, 0);
+    data = stbi_load("./assets/tertawatapiokegas.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D,
            	0,
-           	GL_RGBA,
+           	GL_RGB,
            	width,
            	height,
            	0,
-           	GL_RGBA,
+           	GL_RGB,
            	GL_UNSIGNED_BYTE,
            	data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -311,40 +343,95 @@ int main()
         // ---------------------------
         processInput(window);
 
+        // Enable zBuffer
+        // ---------------------------
+        glEnable(GL_DEPTH_TEST);
+
         // Reset pixel
         // ---------------------------
-        glClearColor(0.53f, 0.53f, 0.53f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(
+            glm::sin(glm::radians(90.0f)*(float)glfwGetTime()*5.0f),
+            glm::sin(glm::radians(90.0f)*(float)glfwGetTime()*4.0f),
+            glm::sin(glm::radians(90.0f)*(float)glfwGetTime()*7.0f),
+            1.0f
+        );
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        ShaderUse(s);
+
+        // Bind & activate texture
+        // ---------------------------
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+
+        // View matrix
+        glm::mat4 view(1.0f);
+        view = glm::translate(
+            view,
+            glm::vec3(0.0f, 0.0f, -3.5)
+        );
+        view = glm::rotate(view, (float)glm::radians(-60.0f), glm::vec3(1.0, 0.0, 0.0));
+        ShaderSetTransformation(s, "view", glm::value_ptr(view));
+
+        // Perspective
+        float aspectRatio = (float)WIDTH/(float)HEIGHT;
+        glm::mat4 perspective = glm::perspective(glm::radians(60.0f), aspectRatio, 0.1f, 100.0f);
+        ShaderSetTransformation(s, "perspective", glm::value_ptr(perspective));
+
+        // Render
+        // ---------------------------
+        {
+            // Matrices
+            // ---------------------------
+
+            // Model matrix
+            glm::mat4 model(1.0f);
+            float angle = 90.0f;
+            model = glm::translate(
+                model,
+                glm::vec3(0.0f, glm::sin(glm::radians(90.0f) * (float)glfwGetTime() * 1.5f), 0.0f)
+            );
+            model = glm::translate(
+                model,
+                glm::vec3(-1.5f, 1.3f, 0.0f)
+            );
+            model = glm::rotate(model, (float)glfwGetTime()*1.5f*glm::radians(angle), glm::vec3(0.0, -0.69f, 1.0));
+            ShaderSetTransformation(s, "model", glm::value_ptr(model));
+
+
+            // Draw
+            // ---------------------------
+            glBindVertexArray(VAO);
+            // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        }
 
         // Bind & activate texture
         // ---------------------------
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
 
         {
-            // Transformations
-            // ---------------------------
-            glm::mat4 trans(1.0f);
-            trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0.0f));
-            trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
+            // Model matrix
+            glm::mat4 model(1.0f);
+            float angle = 90.0f;
+            model = glm::translate(
+                model,
+                glm::vec3(glm::sin(glm::radians(60.0f) * (float)glfwGetTime()), glm::cos(glm::radians(60.0f) * (float)glfwGetTime()), 0.0f)
+            );
+            model = glm::translate(
+                model,
+                glm::vec3(0.5f, -1.0f, 0.0f)
+            );
+            model = glm::rotate(model, (float)glfwGetTime()*1.5f*glm::radians(angle), glm::vec3(-0.3, 0.0, -1.0));
+            ShaderSetTransformation(s, "model", glm::value_ptr(model));
 
-            // Render
+            // Draw
             // ---------------------------
-            renderElement(s, VAO, trans);
-        }
-        {
-            // Transformations
-            // ---------------------------
-            glm::mat4 trans(1.0f);
-            trans = glm::translate(trans, glm::vec3(0.5, 0.5, 0.0f));
-            auto rot = glm::abs(glm::sin(glfwGetTime()));
-            trans = glm::scale(trans, glm::vec3(rot, rot, 1));
-
-            // Render
-            // ---------------------------
-            renderElement(s, VAO, trans);
+            glBindVertexArray(VAO);
+            // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
         // Swap buffer and poll IO events
