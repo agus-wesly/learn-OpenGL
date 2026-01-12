@@ -148,6 +148,19 @@ void renderElement(const Shader &s, uint32_t VAO, glm::mat4 trans) {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
+glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3( 2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f,  3.0f, -7.5f),
+    glm::vec3( 1.3f, -2.0f, -2.5f),
+    glm::vec3( 1.5f,  2.0f, -2.5f),
+    glm::vec3( 1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
 int main()
 {
     // Initialize OpenGL
@@ -277,12 +290,12 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    stbi_set_flip_vertically_on_load(false);
+    stbi_set_flip_vertically_on_load(true);
 
     // Read image and bind to texture1
     // --------------------------------------------
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("./assets/jangandikasihtau.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("./assets/container.jpg", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D,
            	0,
@@ -310,15 +323,15 @@ int main()
 
     // Read image and bind to texture2
     // --------------------------------------------
-    data = stbi_load("./assets/tertawatapiokegas.jpg", &width, &height, &nrChannels, 0);
+    data = stbi_load("./assets/awesomeface.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D,
            	0,
-           	GL_RGB,
+           	GL_RGBA,
            	width,
            	height,
            	0,
-           	GL_RGB,
+           	GL_RGBA,
            	GL_UNSIGNED_BYTE,
            	data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -349,12 +362,7 @@ int main()
 
         // Reset pixel
         // ---------------------------
-        glClearColor(
-            glm::sin(glm::radians(90.0f)*(float)glfwGetTime()*5.0f),
-            glm::sin(glm::radians(90.0f)*(float)glfwGetTime()*4.0f),
-            glm::sin(glm::radians(90.0f)*(float)glfwGetTime()*7.0f),
-            1.0f
-        );
+        glClearColor(0.53f, 0.53f, 0.53f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ShaderUse(s);
@@ -362,7 +370,13 @@ int main()
         // Bind & activate texture
         // ---------------------------
         glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
+
+        // Matrices
+        // ---------------------------
 
         // View matrix
         glm::mat4 view(1.0f);
@@ -370,7 +384,6 @@ int main()
             view,
             glm::vec3(0.0f, 0.0f, -3.5)
         );
-        view = glm::rotate(view, (float)glm::radians(-60.0f), glm::vec3(1.0, 0.0, 0.0));
         ShaderSetTransformation(s, "view", glm::value_ptr(view));
 
         // Perspective
@@ -378,53 +391,11 @@ int main()
         glm::mat4 perspective = glm::perspective(glm::radians(60.0f), aspectRatio, 0.1f, 100.0f);
         ShaderSetTransformation(s, "perspective", glm::value_ptr(perspective));
 
-        // Render
-        // ---------------------------
-        {
-            // Matrices
-            // ---------------------------
-
+        for (int i = 0; i < 10; ++i) {
             // Model matrix
             glm::mat4 model(1.0f);
-            float angle = 90.0f;
-            model = glm::translate(
-                model,
-                glm::vec3(0.0f, glm::sin(glm::radians(90.0f) * (float)glfwGetTime() * 1.5f), 0.0f)
-            );
-            model = glm::translate(
-                model,
-                glm::vec3(-1.5f, 1.3f, 0.0f)
-            );
-            model = glm::rotate(model, (float)glfwGetTime()*1.5f*glm::radians(angle), glm::vec3(0.0, -0.69f, 1.0));
-            ShaderSetTransformation(s, "model", glm::value_ptr(model));
-
-
-            // Draw
-            // ---------------------------
-            glBindVertexArray(VAO);
-            // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        }
-
-        // Bind & activate texture
-        // ---------------------------
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-
-        {
-            // Model matrix
-            glm::mat4 model(1.0f);
-            float angle = 90.0f;
-            model = glm::translate(
-                model,
-                glm::vec3(glm::sin(glm::radians(60.0f) * (float)glfwGetTime()), glm::cos(glm::radians(60.0f) * (float)glfwGetTime()), 0.0f)
-            );
-            model = glm::translate(
-                model,
-                glm::vec3(0.5f, -1.0f, 0.0f)
-            );
-            model = glm::rotate(model, (float)glfwGetTime()*1.5f*glm::radians(angle), glm::vec3(-0.3, 0.0, -1.0));
+            model = glm::translate(model, cubePositions[i]);
+            model = glm::rotate(model, glm::radians(90.0f)*i, glm::vec3(0.0, -0.69f, 1.0));
             ShaderSetTransformation(s, "model", glm::value_ptr(model));
 
             // Draw
@@ -433,6 +404,7 @@ int main()
             // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
 
         // Swap buffer and poll IO events
         // ---------------------------
