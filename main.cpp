@@ -14,6 +14,64 @@
 #define WIDTH 800
 #define HEIGHT 600
 
+// Camera
+// ---------------------
+glm::vec3 cameraPosition(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
+float cameraYaw = -90.0f;
+float cameraPitch = 0.0f;
+
+glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3( 2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f,  3.0f, -7.5f),
+    glm::vec3( 1.3f, -2.0f, -2.5f),
+    glm::vec3( 1.5f,  2.0f, -2.5f),
+    glm::vec3( 1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
+float prevTime = (float)glfwGetTime();
+float deltaTime = 0.0f;
+
+float lastX = WIDTH/2;
+float lastY = HEIGHT/2;
+bool firstRender = true;
+
+void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
+    if (firstRender) {
+        lastX = (float)xpos;
+        lastY = (float)ypos;
+        firstRender = false;
+    }
+
+    float xOffset = (float)xpos - lastX;
+    float yOffset = lastY - (float)ypos;
+    lastX = (float)xpos;
+    lastY = (float)ypos;
+
+    const float sensitivity = 0.1f;
+    cameraYaw += xOffset * sensitivity;
+    cameraPitch += yOffset * sensitivity;
+
+    if (cameraPitch > 89.0f) {
+        cameraPitch = 89.0f;
+    }
+    if (cameraPitch < -89.0f) {
+        cameraPitch = -89.0f;
+    }
+
+    glm::vec3 direction;
+    direction.x = glm::cos(glm::radians(cameraPitch)) * glm::cos(glm::radians(cameraYaw));
+    direction.y = glm::sin(glm::radians(cameraPitch));
+    direction.z = glm::cos(glm::radians(cameraPitch)) * glm::sin(glm::radians(cameraYaw));
+    cameraFront = glm::normalize(direction);
+}
+
 struct Shader {
     uint32_t ID;
 };
@@ -127,9 +185,28 @@ void frameBufferSizeCallback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
+
 void processInput(GLFWwindow *window) {
+    const float cameraSpeed = 2.5f * deltaTime;
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {  // Front
+        cameraPosition += cameraSpeed * cameraFront ;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { // Back
+        cameraPosition -= cameraSpeed * cameraFront;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { // Left
+        cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { // Right
+        cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     }
 }
 
@@ -147,19 +224,6 @@ void renderElement(const Shader &s, uint32_t VAO, glm::mat4 trans) {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
-
-glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f),
-    glm::vec3( 2.0f,  5.0f, -15.0f),
-    glm::vec3(-1.5f, -2.2f, -2.5f),
-    glm::vec3(-3.8f, -2.0f, -12.3f),
-    glm::vec3( 2.4f, -0.4f, -3.5f),
-    glm::vec3(-1.7f,  3.0f, -7.5f),
-    glm::vec3( 1.3f, -2.0f, -2.5f),
-    glm::vec3( 1.5f,  2.0f, -2.5f),
-    glm::vec3( 1.5f,  0.2f, -1.5f),
-    glm::vec3(-1.3f,  1.0f, -1.5f)
-};
 
 int main()
 {
@@ -180,6 +244,11 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
+
+    // Disable mouse
+    // ---------------------------
+    glfwSetCursorPosCallback(window, cursorPosCallback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Load OpenGL functions
     // ---------------------------
@@ -352,6 +421,12 @@ int main()
     ShaderSetInt(s, "ourTexture2", 1);
 
     while (!glfwWindowShouldClose(window)) {
+        // per-frame time logic
+        // ---------------------------
+        float currentTime = (float)glfwGetTime();
+        deltaTime = currentTime - prevTime;
+        prevTime = currentTime;
+
         // Input processing
         // ---------------------------
         processInput(window);
@@ -377,12 +452,11 @@ int main()
 
         // Matrices
         // ---------------------------
-
         // View matrix
-        glm::mat4 view(1.0f);
-        view = glm::translate(
-            view,
-            glm::vec3(0.0f, 0.0f, -3.5)
+        auto view = glm::lookAt(
+            cameraPosition,
+            cameraPosition + cameraFront,
+            cameraUp
         );
         ShaderSetTransformation(s, "view", glm::value_ptr(view));
 
