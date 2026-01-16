@@ -21,6 +21,7 @@ glm::vec3 cameraFront(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 float cameraYaw = -90.0f;
 float cameraPitch = 0.0f;
+float cameraFOV = 45.0f;
 
 glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f),
@@ -70,6 +71,14 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
     direction.y = glm::sin(glm::radians(cameraPitch));
     direction.z = glm::cos(glm::radians(cameraPitch)) * glm::sin(glm::radians(cameraYaw));
     cameraFront = glm::normalize(direction);
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    cameraFOV -= (float)yoffset;
+    if (cameraFOV <= 1.0f)
+        cameraFOV = 1.0f;
+    if (cameraFOV > 60.0f)
+        cameraFOV = 60.0f;
 }
 
 struct Shader {
@@ -245,10 +254,11 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, frameBufferSizeCallback);
 
-    // Disable mouse
+    // Registering mouse callbacks
     // ---------------------------
     glfwSetCursorPosCallback(window, cursorPosCallback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetScrollCallback(window, scrollCallback);
 
     // Load OpenGL functions
     // ---------------------------
@@ -461,8 +471,12 @@ int main()
         ShaderSetTransformation(s, "view", glm::value_ptr(view));
 
         // Perspective
-        float aspectRatio = (float)WIDTH/(float)HEIGHT;
-        glm::mat4 perspective = glm::perspective(glm::radians(60.0f), aspectRatio, 0.1f, 100.0f);
+        glm::mat4 perspective = glm::perspective(
+            glm::radians(cameraFOV),
+            (float)WIDTH/(float)HEIGHT,
+            0.1f,
+            100.0f
+        );
         ShaderSetTransformation(s, "perspective", glm::value_ptr(perspective));
 
         for (int i = 0; i < 10; ++i) {
