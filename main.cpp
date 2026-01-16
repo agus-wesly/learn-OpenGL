@@ -19,6 +19,7 @@
 struct Camera {
     glm::vec3 position;
     glm::vec3 front;
+    glm::vec3 right;
     glm::vec3 up;
     float yaw;
     float pitch;
@@ -35,6 +36,7 @@ void CameraUpdateVector(Camera &c) {
     direction.z = glm::cos(glm::radians(c.pitch)) * glm::sin(glm::radians(c.yaw));
 
     c.front = glm::normalize(direction);
+    c.right = glm::normalize(glm::cross(c.front, c.up));
 }
 
 void CameraInit(Camera &c, glm::vec3 position, glm::vec3 up, float yaw, float pitch, float fov) {
@@ -71,14 +73,15 @@ enum CameraMoveDirection {
 void CameraMove(Camera &c, CameraMoveDirection dir, float deltaTime) {
     float framespeed = c.speed * deltaTime;
     if (dir == FORWARD) {
-        c.position += framespeed * c.front ;
+        c.position += framespeed * c.front;
     } else if (dir == BACKWARD) {
-        c.position -= framespeed * c.front ;
+        c.position -= framespeed * c.front;
     } else if (dir == LEFT) {
-        c.position -= glm::normalize(glm::cross(c.front, c.up)) * framespeed;
+        c.position -= c.right * framespeed;
     } else if (dir == RIGHT) {
-        c.position += glm::normalize(glm::cross(c.front, c.up)) * framespeed;
+        c.position += c.right * framespeed;
     }
+    c.position.y = 0;
 }
 
 void CameraZoom(Camera &c, float yoffset) {
@@ -216,7 +219,6 @@ void ShaderSetBool(const Shader &s, const char *name, bool value) {
     assert(vertexColorLocation != -1);
     glUniform1i(vertexColorLocation, value);
 }
-
 
 // Globals
 // --------------------------------------
