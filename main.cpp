@@ -81,7 +81,7 @@ void CameraMove(Camera &c, CameraMoveDirection dir, float deltaTime) {
     } else if (dir == RIGHT) {
         c.position += c.right * framespeed;
     }
-    c.position.y = 0;
+    // c.position.y = 0;
 }
 
 void CameraZoom(Camera &c, float yoffset) {
@@ -246,6 +246,12 @@ void ShaderSetBool(const Shader &s, const char *name, bool value) {
     glUniform1i(vertexColorLocation, value);
 }
 
+void ShaderSetVec3(const Shader &s, const char *name, float x, float y, float z) {
+    int transformLocation = glGetUniformLocation(s.ID, name);
+    assert(transformLocation != -1);
+    glUniform3f(transformLocation, x, y, z);
+}
+
 // Globals
 // --------------------------------------
 Camera camera;
@@ -335,7 +341,14 @@ int main()
 {
     // Initialize app
     // ---------------------------
-    CameraInit(camera, glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 45.0f);
+    CameraInit(
+        camera,
+        glm::vec3(0.0f, 0.0f, 3.0f), // position
+        glm::vec3(0.0f, 1.0f, 0.0f), // up
+        -90.0f,                      // yaw
+        0.0f,                        // pitch
+        45.0f                        // fov
+    );
 
     // Initialize OpenGL
     // ---------------------------
@@ -370,55 +383,56 @@ int main()
 
     // Build and compile shader
     // ---------------------------
-    Shader s{};
-    const char *vPath = "./vertex_shader.glsl";
-    const char *fPath = "./fragment_shader.glsl";
-    ShaderInit(s, vPath, fPath);
+    Shader lightingShader{};
+    ShaderInit(lightingShader, "./colors_vertex.glsl",  "./colors_fragment.glsl");
+
+    Shader lightCubeShader{};
+    ShaderInit(lightCubeShader,  "./light_cube_vertex.glsl",  "./light_cube_fragment.glsl");
 
     // Setup vertex data
     // ---------------------------
     float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
 
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
 
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        -0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
     };
 
     // Setup indices
@@ -430,18 +444,18 @@ int main()
 
     // Initialization
     // ---------------------------
-    uint32_t VAO, VBO;
+    uint32_t cubeVAO, VBO;
     // uint32_t EBO;
-    glGenVertexArrays(1, &VAO);
+    glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &VBO);
     // glGenBuffers(1, &EBO);
 
-    // 1) Bind vertex array object first
-    glBindVertexArray(VAO);
-
-    // 2) Bind vertex buffer object with vertex
+    // 1) Bind vertex buffer object with vertex
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // 2) Bind vertex array object first
+    glBindVertexArray(cubeVAO);
 
     // 3) Bind element buffer object with indices
     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -449,12 +463,16 @@ int main()
 
     // 4) Set the vertex attribute
     // layout (location = 0) in vec3 aPos;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (GLvoid *)0);
     glEnableVertexAttribArray(0);
 
-    // layout (location = 1) in vec2 aTexPos;
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GL_FLOAT), (GLvoid *)(3*sizeof(GL_FLOAT)));
-    glEnableVertexAttribArray(1);
+    uint32_t lightCubeVAO;
+    glGenVertexArrays(1, &lightCubeVAO);
+    glBindVertexArray(lightCubeVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (GLvoid *)0);
+    glEnableVertexAttribArray(0);
 
     // Setup textures
     // ---------------------------
@@ -521,16 +539,6 @@ int main()
     }
     stbi_image_free(data);
 
-    // Setting up texture uniforms
-    // ---------------------------
-    ShaderUse(s);
-
-    // uniform sampler2D ourTexture1;
-    ShaderSetInt(s, "ourTexture1", 0);
-
-    // uniform sampler2D ourTexture2;
-    ShaderSetInt(s, "ourTexture2", 1);
-
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
         // ---------------------------
@@ -548,40 +556,61 @@ int main()
 
         // Reset pixel
         // ---------------------------
-        glClearColor(0.53f, 0.53f, 0.53f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        ShaderUse(s);
 
         // Bind & activate texture
         // ---------------------------
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, texture1);
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
+        // glActiveTexture(GL_TEXTURE1);
+        // glBindTexture(GL_TEXTURE_2D, texture2);
 
-        // Matrices
-        // ---------------------------
-        // View matrix
-        auto view = CameraGetViewMatrix(camera);
-        ShaderSetTransformation(s, "view", glm::value_ptr(view));
+        {
+            ShaderUse(lightingShader);
+            ShaderSetVec3(lightingShader, "light", 1.0f, 1.0f, 1.0f); // uniform vec3 light;
+            ShaderSetVec3(lightingShader, "color", 1.0f, 0.5f, 0.31f); // uniform vec3 color;
 
-        // Perspective
-        auto perspective = CameraGetPerspective(camera);
-        ShaderSetTransformation(s, "perspective", glm::value_ptr(perspective));
-
-        for (int i = 0; i < 10; ++i) {
             // Model matrix
             glm::mat4 model(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            model = glm::rotate(model, glm::radians(90.0f)*i, glm::vec3(0.0, -0.69f, 1.0));
-            ShaderSetTransformation(s, "model", glm::value_ptr(model));
+            model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  0.0f));
+            ShaderSetTransformation(lightingShader, "model", glm::value_ptr(model));
+
+            // View matrix
+            auto view = CameraGetViewMatrix(camera);
+            ShaderSetTransformation(lightingShader, "view", glm::value_ptr(view));
+
+            // Perspective
+            auto perspective = CameraGetPerspective(camera);
+            ShaderSetTransformation(lightingShader, "perspective", glm::value_ptr(perspective));
 
             // Draw
             // ---------------------------
-            glBindVertexArray(VAO);
-            // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            glBindVertexArray(cubeVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        {
+            ShaderUse(lightCubeShader);
+
+            // Model matrix
+            glm::mat4 model(1.0f);
+            model = glm::translate(model, glm::vec3 (1.2f, 1.0f, 2.0f));
+            model = glm::scale(model, glm::vec3(0.2f));
+            ShaderSetTransformation(lightCubeShader, "model", glm::value_ptr(model));
+
+            // View matrix
+            auto view = CameraGetViewMatrix(camera);
+            ShaderSetTransformation(lightCubeShader, "view", glm::value_ptr(view));
+
+            // Perspective
+            auto perspective = CameraGetPerspective(camera);
+            ShaderSetTransformation(lightCubeShader, "perspective", glm::value_ptr(perspective));
+
+            // Draw
+            // ---------------------------
+            glBindVertexArray(lightCubeVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
