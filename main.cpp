@@ -71,6 +71,7 @@ enum CameraMoveDirection {
 };
 
 void CameraMove(Camera &c, CameraMoveDirection dir, float deltaTime) {
+    float oldY = c.position.y;
     float framespeed = c.speed * deltaTime;
     if (dir == FORWARD) {
         c.position += framespeed * c.front;
@@ -81,7 +82,7 @@ void CameraMove(Camera &c, CameraMoveDirection dir, float deltaTime) {
     } else if (dir == RIGHT) {
         c.position += c.right * framespeed;
     }
-    c.position.y = 0;
+    c.position.y = oldY;
 }
 
 void CameraZoom(Camera &c, float yoffset) {
@@ -335,7 +336,7 @@ int main()
 {
     // Initialize app
     // ---------------------------
-    CameraInit(camera, glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 45.0f);
+    CameraInit(camera, glm::vec3(0.0f, 6.0f, 6.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, -60.0f, 60.0f);
 
     // Initialize OpenGL
     // ---------------------------
@@ -571,19 +572,52 @@ int main()
         auto perspective = CameraGetPerspective(camera);
         ShaderSetTransformation(s, "perspective", glm::value_ptr(perspective));
 
-        for (int i = 0; i < 10; ++i) {
-            // Model matrix
-            glm::mat4 model(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            model = glm::rotate(model, glm::radians(90.0f)*i, glm::vec3(0.0, -0.69f, 1.0));
-            ShaderSetTransformation(s, "model", glm::value_ptr(model));
+        // SUN
+        // ----------------------------
+        glm::mat4 sunModel(1.0f);
+        sunModel = glm::translate(sunModel, glm::vec3(0.0f,  0.0f,  0.0f));
+        sunModel = glm::rotate(sunModel, glm::radians(60.0f*(float)glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));
+        ShaderSetTransformation(s, "model", glm::value_ptr(sunModel));
+        // Draw
+        // ---------------------------
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
-            // Draw
-            // ---------------------------
-            glBindVertexArray(VAO);
-            // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        // EARTH
+        // ----------------------------
+        const float earthOrbit = 3.0f;
+        glm::mat4 earthLocal(1.0f);
+        earthLocal = glm::rotate(
+            earthLocal,
+            glm::radians(60.0f*(float)glfwGetTime()),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+        earthLocal = glm::translate(earthLocal, glm::vec3(earthOrbit,  0.0f,  0.0f));
+        earthLocal = glm::rotate(
+            earthLocal,
+            glm::radians(60.0f*(float)glfwGetTime()),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+
+        glm::mat4 earthModel = sunModel * earthLocal;
+        ShaderSetTransformation(s, "model", glm::value_ptr(earthModel));
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // MOON
+        // ----------------------------
+        const float moonOrbit = 1.0f;
+        glm::mat4 moonLocal(1.0f);
+        moonLocal = glm::rotate(moonLocal, glm::radians(90.0f * (float)glfwGetTime()), glm::vec3(0.0f,  1.0f,  0.0f));
+        moonLocal = glm::translate(moonLocal, glm::vec3(moonOrbit,  0.0f,  0.0f));
+        moonLocal = glm::rotate(
+            moonLocal,
+            glm::radians(60.0f*(float)glfwGetTime()),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+        moonLocal = glm::scale(moonLocal, glm::vec3(0.5f, 0.5f, 0.5f));
+
+        glm::mat4 moonModel = earthModel * moonLocal;
+        ShaderSetTransformation(s, "model", glm::value_ptr(moonModel));
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // Swap buffer and poll IO events
         // ---------------------------
