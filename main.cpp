@@ -263,6 +263,8 @@ float lastX = WIDTH/2;
 float lastY = HEIGHT/2;
 bool firstRender = true;
 
+glm::vec3 lightPosition(0.0f, 3.0f, 0.0f);
+
 glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f),
     glm::vec3( 2.0f,  5.0f, -15.0f),
@@ -392,47 +394,48 @@ int main()
     // Setup vertex data
     // ---------------------------
     float vertices[] = {
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
+        // Positions           // Normals
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-        -0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
     };
 
     // Setup indices
@@ -463,15 +466,20 @@ int main()
 
     // 4) Set the vertex attribute
     // layout (location = 0) in vec3 aPos;
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (GLvoid *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid *)0);
     glEnableVertexAttribArray(0);
+
+    // layout (location = 1) in vec3 normal;
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid *) (3*sizeof(GL_FLOAT)));
+    glEnableVertexAttribArray(1);
 
     uint32_t lightCubeVAO;
     glGenVertexArrays(1, &lightCubeVAO);
     glBindVertexArray(lightCubeVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GL_FLOAT), (GLvoid *)0);
+    // layout (location = 0) in vec3 aPos;
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GL_FLOAT), (GLvoid *)0);
     glEnableVertexAttribArray(0);
 
     // Setup textures
@@ -569,13 +577,22 @@ int main()
 
         {
             ShaderUse(lightingShader);
-            ShaderSetVec3(lightingShader, "light", 1.0f, 1.0f, 1.0f); // uniform vec3 light;
-            ShaderSetVec3(lightingShader, "color", 1.0f, 0.5f, 0.31f); // uniform vec3 color;
+
+            ShaderSetVec3(lightingShader, "lightColor", 1.0f, 1.0f, 1.0f); // uniform vec3 light;
+            ShaderSetVec3(lightingShader, "cubeColor", 1.0f, 0.5f, 0.31f); // uniform vec3 color;
+            ShaderSetVec3(lightingShader, "lightPosition", lightPosition.x, lightPosition.y, lightPosition.z); // uniform vec3 lightPosition;
 
             // Model matrix
             glm::mat4 model(1.0f);
-            model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  0.0f));
+            model = glm::translate(model, glm::vec3(-1.0f,  0.0f,  0.0f));
+            model = glm::rotate(model, glm::radians(60.0f * (float)glfwGetTime()), glm::vec3(1.0f, 0.0f, 0.0f));
             ShaderSetTransformation(lightingShader, "model", glm::value_ptr(model));
+
+            // Normal matrix
+            glm::mat3 normalMatrix(glm::inverse(model));
+            int transformLocation = glGetUniformLocation(lightingShader.ID,  "normalMatrix");
+            assert(transformLocation != -1);
+            glUniformMatrix3fv(transformLocation, 1, GL_TRUE, glm::value_ptr(normalMatrix));  // uniform mat3 normalMatrix;
 
             // View matrix
             auto view = CameraGetViewMatrix(camera);
@@ -596,7 +613,7 @@ int main()
 
             // Model matrix
             glm::mat4 model(1.0f);
-            model = glm::translate(model, glm::vec3 (1.2f, 1.0f, 2.0f));
+            model = glm::translate(model, lightPosition);
             model = glm::scale(model, glm::vec3(0.2f));
             ShaderSetTransformation(lightCubeShader, "model", glm::value_ptr(model));
 
