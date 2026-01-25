@@ -252,6 +252,12 @@ void ShaderSetVec3(const Shader &s, const char *name, float x, float y, float z)
     glUniform3f(transformLocation, x, y, z);
 }
 
+void ShaderSetVec3(const Shader &s, const char *name, glm::vec3 v) {
+    int transformLocation = glGetUniformLocation(s.ID, name);
+    assert(transformLocation != -1);
+    glUniform3f(transformLocation, v.x, v.y, v.z);
+}
+
 // Globals
 // --------------------------------------
 Camera camera;
@@ -578,7 +584,6 @@ int main()
         {
             ShaderUse(lightingShader);
 
-            ShaderSetVec3(lightingShader, "lightColor", 1.0f, 1.0f, 1.0f); // uniform vec3 light;
             ShaderSetVec3(lightingShader, "cameraPosition", camera.position.x, camera.position.y, camera.position.z); // uniform vec3 cameraPosition;
 
             // uniform Material material;
@@ -587,11 +592,19 @@ int main()
             ShaderSetVec3(lightingShader, "material.specular", 0.5f, 0.5f, 0.5f);
             ShaderSetFloat(lightingShader, "material.shininess", 32.0f);
 
+            glm::vec3 lightColor(1.0f);
+            lightColor.x = glm::sin((float)glfwGetTime() * 2.0f);
+            lightColor.y = glm::sin((float)glfwGetTime() * 1.3f);
+            lightColor.z = glm::sin((float)glfwGetTime() * 5.2f);
+
+            glm::vec3 diffuse = lightColor * glm::vec3(0.5f, 0.5f, 0.5f);
+            glm::vec3 ambient = diffuse * glm::vec3(0.2f, 0.2f, 0.2f);
+
             // uniform Light light;
-            ShaderSetVec3(lightingShader, "light.position", lightPosition.x, lightPosition.y, lightPosition.z);
-            ShaderSetVec3(lightingShader, "light.ambient", 0.2f, 0.2f, 0.2f);
-            ShaderSetVec3(lightingShader, "light.diffuse", 0.5f, 0.5f, 0.5f);
-            ShaderSetVec3(lightingShader, "light.specular", 1.0f, 1.0f, 1.0f);
+            ShaderSetVec3(lightingShader, "light.position", lightPosition);
+            ShaderSetVec3(lightingShader, "light.ambient", ambient);
+            ShaderSetVec3(lightingShader, "light.diffuse", diffuse);
+            ShaderSetVec3(lightingShader, "light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 
             // Model matrix
             glm::mat4 model(1.0f);
