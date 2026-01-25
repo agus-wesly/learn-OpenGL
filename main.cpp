@@ -263,7 +263,7 @@ float lastX = WIDTH/2;
 float lastY = HEIGHT/2;
 bool firstRender = true;
 
-glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);
+glm::vec3 lightPosition(1.2f, 1.0f, 2.0f);
 
 glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f),
@@ -345,10 +345,10 @@ int main()
     // ---------------------------
     CameraInit(
         camera,
-        glm::vec3(0.0f, 1.5f, 3.5f), // position
+        glm::vec3(-1.0f, -0.5f, 4.0f), // position
         glm::vec3(0.0f, 1.0f, 0.0f), // up
-        -90.0f,                      // yaw
-        -18.0f,                        // pitch
+        -64.0f,                      // yaw
+        16.0f,                        // pitch
         45.0f                        // fov
     );
 
@@ -575,15 +575,23 @@ int main()
         // glActiveTexture(GL_TEXTURE1);
         // glBindTexture(GL_TEXTURE_2D, texture2);
 
-        lightPosition.z = glm::sin((float)glfwGetTime());
-        lightPosition.y = glm::cos((float)glfwGetTime());
         {
             ShaderUse(lightingShader);
 
             ShaderSetVec3(lightingShader, "lightColor", 1.0f, 1.0f, 1.0f); // uniform vec3 light;
-            ShaderSetVec3(lightingShader, "cubeColor", 1.0f, 0.5f, 0.31f); // uniform vec3 color;
-            ShaderSetVec3(lightingShader, "lightPosition", lightPosition.x, lightPosition.y, lightPosition.z); // uniform vec3 lightPosition;
             ShaderSetVec3(lightingShader, "cameraPosition", camera.position.x, camera.position.y, camera.position.z); // uniform vec3 cameraPosition;
+
+            // uniform Material material;
+            ShaderSetVec3(lightingShader, "material.ambient", 1.0f, 0.5f, 0.31f);
+            ShaderSetVec3(lightingShader, "material.diffuse", 1.0f, 0.5f, 0.31f);
+            ShaderSetVec3(lightingShader, "material.specular", 0.5f, 0.5f, 0.5f);
+            ShaderSetFloat(lightingShader, "material.shininess", 32.0f);
+
+            // uniform Light light;
+            ShaderSetVec3(lightingShader, "light.position", lightPosition.x, lightPosition.y, lightPosition.z);
+            ShaderSetVec3(lightingShader, "light.ambient", 0.2f, 0.2f, 0.2f);
+            ShaderSetVec3(lightingShader, "light.diffuse", 0.5f, 0.5f, 0.5f);
+            ShaderSetVec3(lightingShader, "light.specular", 1.0f, 1.0f, 1.0f);
 
             // Model matrix
             glm::mat4 model(1.0f);
