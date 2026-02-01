@@ -541,6 +541,7 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // Setup textures
     // ---------------------------
     uint32_t texture1 = loadTexture( "./assets/container2.png");
+    uint32_t texture2 = loadTexture( "./assets/container2_specular.png");
 
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -567,13 +568,14 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
 
-        // glActiveTexture(GL_TEXTURE1);
-        // glBindTexture(GL_TEXTURE_2D, texture2);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
         {
             ShaderUse(lightingShader);
 
             ShaderSetInt(lightingShader, "material.diffuseMap", 0);
+            ShaderSetInt(lightingShader, "material.specular", 1);
 
             ShaderSetVec3(lightingShader, "cameraPosition", camera.position.x, camera.position.y, camera.position.z); // uniform vec3 cameraPosition;
 
