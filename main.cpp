@@ -587,18 +587,14 @@ int main()
             ShaderSetVec3(lightingShader, "cameraPosition", camera.position.x, camera.position.y, camera.position.z); // uniform vec3 cameraPosition;
 
             // uniform Material material;
-            ShaderSetVec3(lightingShader, "material.ambient", 1.0f, 0.5f, 0.31f);
-            ShaderSetVec3(lightingShader, "material.diffuse", 1.0f, 0.5f, 0.31f);
-            ShaderSetVec3(lightingShader, "material.specular", 0.5f, 0.5f, 0.5f);
+            ShaderSetVec3(lightingShader, "material.ambient", 0.24725f,	0.1995f,	0.0745f);
+            ShaderSetVec3(lightingShader, "material.diffuse", 0.75164f,	0.60648f,	0.22648f);
+            ShaderSetVec3(lightingShader, "material.specular", 0.628281f,	0.555802f,	0.366065f);
             ShaderSetFloat(lightingShader, "material.shininess", 32.0f);
 
             glm::vec3 lightColor(1.0f);
-            lightColor.x = glm::sin((float)glfwGetTime() * 2.0f);
-            lightColor.y = glm::sin((float)glfwGetTime() * 1.3f);
-            lightColor.z = glm::sin((float)glfwGetTime() * 5.2f);
-
-            glm::vec3 diffuse = lightColor * glm::vec3(0.5f, 0.5f, 0.5f);
-            glm::vec3 ambient = diffuse * glm::vec3(0.2f, 0.2f, 0.2f);
+            glm::vec3 diffuse = lightColor;
+            glm::vec3 ambient = diffuse * glm::vec3(0.5f);
 
             // uniform Light light;
             ShaderSetVec3(lightingShader, "light.position", lightPosition);
