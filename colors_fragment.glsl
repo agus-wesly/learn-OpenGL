@@ -4,12 +4,12 @@ uniform vec3 cameraPosition;
 
 in vec3 Normal;
 in vec3 FragmentPosition;
+in vec2 TexCoords;
 
 out vec4 FragColor;
 
 struct Material {
-    vec3  ambient;
-    vec3  diffuse;
+    sampler2D diffuseMap;
     vec3  specular;
     float shininess;
 };
@@ -27,12 +27,12 @@ uniform Light    light;
 
 void main()
 {
-    vec3 ambient = (light.ambient * material.ambient);
+    vec3 ambient = (light.ambient * texture(material.diffuseMap, TexCoords).rgb);
 
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(light.position - FragmentPosition);
     float diff = max(dot(lightDir, norm), 0.0f);
-    vec3 diffuse = (diff * light.diffuse * material.diffuse);
+    vec3 diffuse = (diff * light.diffuse * texture(material.diffuseMap, TexCoords).rgb);
 
     vec3 cameraDir = normalize(cameraPosition - FragmentPosition);
     vec3 reflectedDir = reflect(-lightDir, norm);
