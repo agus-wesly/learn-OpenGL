@@ -542,6 +542,7 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // ---------------------------
     uint32_t texture1 = loadTexture( "./assets/container2.png");
     uint32_t texture2 = loadTexture( "./assets/container2_specular.png");
+    uint32_t texture3 = loadTexture( "./assets/matrix.jpg");
 
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -571,11 +572,15 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, texture3);
+
         {
             ShaderUse(lightingShader);
 
             ShaderSetInt(lightingShader, "material.diffuseMap", 0);
             ShaderSetInt(lightingShader, "material.specular", 1);
+            ShaderSetInt(lightingShader, "material.emission", 2);
 
             ShaderSetVec3(lightingShader, "cameraPosition", camera.position.x, camera.position.y, camera.position.z); // uniform vec3 cameraPosition;
 
@@ -584,7 +589,7 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             ShaderSetFloat(lightingShader, "material.shininess", 32.0f);
 
             glm::vec3 lightColor(1.0f);
-            glm::vec3 diffuse = lightColor;
+            glm::vec3 diffuse = lightColor * glm::vec3(0.5f);
             glm::vec3 ambient = diffuse * glm::vec3(0.5f);
 
             // uniform Light light;
