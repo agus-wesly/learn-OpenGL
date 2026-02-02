@@ -397,7 +397,7 @@ int main()
 // ---------------------------
 CameraInit(
     camera,
-    glm::vec3(-1.0f, -0.5f, 4.0f), // position
+    glm::vec3(0.0f, 0.0f, 4.0f), // position
     glm::vec3(0.0f, 1.0f, 0.0f), // up
     -64.0f,                      // yaw
     16.0f,                        // pitch
@@ -490,6 +490,19 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
     };
 
+    glm::vec3 cubePositions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
+
     // Setup indices
     // ---------------------------
     uint32_t indices[] = {  // note that we start from 0!
@@ -542,7 +555,6 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // ---------------------------
     uint32_t texture1 = loadTexture( "./assets/container2.png");
     uint32_t texture2 = loadTexture( "./assets/container2_specular.png");
-    uint32_t texture3 = loadTexture( "./assets/matrix.jpg");
 
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -572,36 +584,40 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, texture3);
+        ShaderUse(lightingShader);
 
-        {
-            ShaderUse(lightingShader);
+        ShaderSetInt(lightingShader, "material.diffuseMap", 0);
+        ShaderSetInt(lightingShader, "material.specular", 1);
 
-            ShaderSetInt(lightingShader, "material.diffuseMap", 0);
-            ShaderSetInt(lightingShader, "material.specular", 1);
-            ShaderSetInt(lightingShader, "material.emission", 2);
+        ShaderSetVec3(lightingShader, "cameraPosition", camera.position.x, camera.position.y, camera.position.z); // uniform vec3 cameraPosition;
 
-            ShaderSetVec3(lightingShader, "cameraPosition", camera.position.x, camera.position.y, camera.position.z); // uniform vec3 cameraPosition;
+        // uniform Material material;
+        ShaderSetVec3(lightingShader, "material.specular", 0.628281f,	0.555802f,	0.366065f);
+        ShaderSetFloat(lightingShader, "material.shininess", 32.0f);
 
-            // uniform Material material;
-            ShaderSetVec3(lightingShader, "material.specular", 0.628281f,	0.555802f,	0.366065f);
-            ShaderSetFloat(lightingShader, "material.shininess", 32.0f);
+        glm::vec3 lightColor(1.0f);
+        glm::vec3 diffuse = lightColor * glm::vec3(0.5f);
+        glm::vec3 ambient = diffuse * glm::vec3(0.5f);
 
-            glm::vec3 lightColor(1.0f);
-            glm::vec3 diffuse = lightColor * glm::vec3(0.5f);
-            glm::vec3 ambient = diffuse * glm::vec3(0.5f);
+        // uniform Light light;
+        ShaderSetVec3(lightingShader, "light.position", lightPosition);
+        ShaderSetVec3(lightingShader, "light.ambient", ambient);
+        ShaderSetVec3(lightingShader, "light.diffuse", diffuse);
+        ShaderSetVec3(lightingShader, "light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 
-            // uniform Light light;
-            ShaderSetVec3(lightingShader, "light.position", lightPosition);
-            ShaderSetVec3(lightingShader, "light.ambient", ambient);
-            ShaderSetVec3(lightingShader, "light.diffuse", diffuse);
-            ShaderSetVec3(lightingShader, "light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        // View matrix
+        auto view = CameraGetViewMatrix(camera);
+        ShaderSetTransformation(lightingShader, "view", glm::value_ptr(view));
 
+        // Perspective
+        auto perspective = CameraGetPerspective(camera);
+        ShaderSetTransformation(lightingShader, "perspective", glm::value_ptr(perspective));
+
+        for (int i = 0; i < 10; ++i) {
             // Model matrix
             glm::mat4 model(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f,  0.0f,  0.0f));
-            // model = glm::rotate(model, glm::radians(60.0f * (float)glfwGetTime()), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::translate(model, cubePositions[i]);
+            model = glm::rotate(model, glm::radians(90.0f)*i, glm::vec3(0.0, -0.69f, 1.0));
             ShaderSetTransformation(lightingShader, "model", glm::value_ptr(model));
 
             // Normal matrix
@@ -609,14 +625,6 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
             int transformLocation = glGetUniformLocation(lightingShader.ID,  "normalMatrix");
             assert(transformLocation != -1);
             glUniformMatrix3fv(transformLocation, 1, GL_TRUE, glm::value_ptr(normalMatrix));  // uniform mat3 normalMatrix;
-
-            // View matrix
-            auto view = CameraGetViewMatrix(camera);
-            ShaderSetTransformation(lightingShader, "view", glm::value_ptr(view));
-
-            // Perspective
-            auto perspective = CameraGetPerspective(camera);
-            ShaderSetTransformation(lightingShader, "perspective", glm::value_ptr(perspective));
 
             // Draw
             // ---------------------------
