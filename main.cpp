@@ -602,10 +602,14 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glm::vec3 lightDirection(-0.2f, -1.0f, -0.3f);
 
         // uniform Light light;
-        ShaderSetVec3(lightingShader, "light.direction", lightDirection);
+        ShaderSetVec3(lightingShader, "light.position", lightPosition);
         ShaderSetVec3(lightingShader, "light.ambient", ambient);
         ShaderSetVec3(lightingShader, "light.diffuse", diffuse);
         ShaderSetVec3(lightingShader, "light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+        ShaderSetFloat(lightingShader, "light.constant", 1.0f);
+        ShaderSetFloat(lightingShader, "light.linear", 0.09f);
+        ShaderSetFloat(lightingShader, "light.quadratic", 0.032f);
 
         // View matrix
         auto view = CameraGetViewMatrix(camera);
