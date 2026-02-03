@@ -602,7 +602,9 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glm::vec3 lightDirection(-0.2f, -1.0f, -0.3f);
 
         // uniform Light light;
-        ShaderSetVec3(lightingShader, "light.position", lightPosition);
+        ShaderSetVec3(lightingShader, "light.position", camera.position);
+        ShaderSetVec3(lightingShader, "light.direction", camera.front);
+        ShaderSetFloat(lightingShader, "light.cutOff", glm::cos(glm::radians(12.5f)));
         ShaderSetVec3(lightingShader, "light.ambient", ambient);
         ShaderSetVec3(lightingShader, "light.diffuse", diffuse);
         ShaderSetVec3(lightingShader, "light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
