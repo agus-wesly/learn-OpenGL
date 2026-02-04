@@ -596,7 +596,7 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         ShaderSetFloat(lightingShader, "material.shininess", 32.0f);
 
         glm::vec3 lightColor(1.0f);
-        glm::vec3 diffuse = lightColor * glm::vec3(0.5f);
+        glm::vec3 diffuse = lightColor * glm::vec3(0.9f);
         glm::vec3 ambient = diffuse * glm::vec3(0.5f);
 
         glm::vec3 lightDirection(-0.2f, -1.0f, -0.3f);
@@ -605,6 +605,7 @@ glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         ShaderSetVec3(lightingShader, "light.position", camera.position);
         ShaderSetVec3(lightingShader, "light.direction", camera.front);
         ShaderSetFloat(lightingShader, "light.cutOff", glm::cos(glm::radians(12.5f)));
+        ShaderSetFloat(lightingShader, "light.outerCutOff", glm::cos(glm::radians(20.5f)));
         ShaderSetVec3(lightingShader, "light.ambient", ambient);
         ShaderSetVec3(lightingShader, "light.diffuse", diffuse);
         ShaderSetVec3(lightingShader, "light.specular", glm::vec3(1.0f, 1.0f, 1.0f));

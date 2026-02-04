@@ -18,6 +18,7 @@ struct Light {
     vec3  position;
     vec3  direction;
     float cutOff;
+    float outerCutOff;
 
     vec3  ambient;
     vec3  diffuse;
@@ -53,10 +54,12 @@ void main()
     ambient *= attenuation;
     specular *= attenuation;
 
-    float val = dot(lightDir, normalize(-light.direction));
-    if (val > light.cutOff) {
-        FragColor = vec4(diffuse + ambient + specular, 1.0f);
-    } else {
-        FragColor = vec4(ambient, 1.0f);
-    }
+    float theta = dot(lightDir, normalize(-light.direction));
+    float epsilon = light.cutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0f, 1.0f);
+
+    diffuse *= intensity;
+    specular *= intensity;
+
+    FragColor = vec4(diffuse + ambient + specular, 1.0f);
 };
